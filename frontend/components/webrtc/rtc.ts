@@ -46,7 +46,6 @@ export async function webcamInit(videoRef: any, remoteRef: any, pc: any) {
 		});
 		console.log(pc);
 	};
-	console.log(pc);
 	let video = videoRef.current;
 	video.srcObject = localStream;
 	video.play();
@@ -66,6 +65,7 @@ export async function callButton(videoRef: any, remoteRef: any, pc: any) {
 
 	// let callInput.value = callDoc.id;
 	console.log(callDoc.id);
+	alert(callDoc.id);
 
 	// Get candidates for caller, save to db
 	pc.onicecandidate = (event: any) => {
@@ -89,7 +89,6 @@ export async function callButton(videoRef: any, remoteRef: any, pc: any) {
 		if (!pc.currentRemoteDescription && data?.answer) {
 			const answerDescription = new RTCSessionDescription(data.answer);
 			pc.setRemoteDescription(answerDescription);
-			console.log('listening remote');
 		}
 	});
 
