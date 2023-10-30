@@ -11,13 +11,13 @@ import {
 } from 'firebase/firestore';
 
 const firebaseConfig = {
-	apiKey: 'AIzaSyDL9zCMqlEaY_xX7dsmtjQfZLNtn1aifts',
-	authDomain: 'screenshare-dea85.firebaseapp.com',
-	projectId: 'screenshare-dea85',
-	storageBucket: 'screenshare-dea85.appspot.com',
-	messagingSenderId: '1066002341166',
-	appId: '1:1066002341166:web:2b9d16f2783fe5399baebf',
-	measurementId: 'G-RG71QVN2H8',
+	apiKey: process.env.FIREBASE_KEY,
+	authDomain: process.env.FIREBASE_AUTHDOMAIN,
+	projectId: process.env.FIREBASE_PROJECTID,
+	storageBucket: process.env.FIREBASE_STORAGEBUCKET,
+	messagingSenderId: process.env.FIREBASE_MESSAGINGSENDER,
+	appId: process.env.FIREBASE_APPID,
+	measurementId: process.env.FIREBASE_MEASUREMENTID,
 };
 
 const app = initializeApp(firebaseConfig);
