@@ -32,7 +32,6 @@ function AuthListener({ children }: { children: React.ReactNode }) {
 			const currentUser = await Auth.currentAuthenticatedUser();
 			setUser(currentUser);
 		} catch (error) {
-			console.error(error);
 			console.log('Not signed in');
 		}
 	};

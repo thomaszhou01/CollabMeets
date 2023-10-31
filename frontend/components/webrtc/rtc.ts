@@ -11,13 +11,13 @@ import {
 } from 'firebase/firestore';
 
 const firebaseConfig = {
-	apiKey: process.env.FIREBASE_KEY,
-	authDomain: process.env.FIREBASE_AUTHDOMAIN,
-	projectId: process.env.FIREBASE_PROJECTID,
-	storageBucket: process.env.FIREBASE_STORAGEBUCKET,
-	messagingSenderId: process.env.FIREBASE_MESSAGINGSENDER,
-	appId: process.env.FIREBASE_APPID,
-	measurementId: process.env.FIREBASE_MEASUREMENTID,
+	apiKey: process.env.NEXT_PUBLIC_FIREBASE_KEY,
+	authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTHDOMAIN,
+	projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECTID,
+	storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGEBUCKET,
+	messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGINGSENDER,
+	appId: process.env.NEXT_PUBLIC_FIREBASE_APPID,
+	measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENTID,
 };
 
 const app = initializeApp(firebaseConfig);
