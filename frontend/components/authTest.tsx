@@ -1,10 +1,13 @@
 'use client';
-import React, { useEffect, useState } from 'react';
+import React, { useContext, useEffect, useState } from 'react';
 import { Amplify, Auth, Hub } from 'aws-amplify';
 import { CognitoHostedUIIdentityProvider } from '@aws-amplify/auth';
 import awsConfig from '../app/aws-exports';
+import { AuthContext } from './context';
 
 function AuthTest() {
+	const username = useContext(AuthContext);
+
 	useEffect(() => {
 		awsConfig.oauth.redirectSignIn = `${window.location.origin}/`;
 		awsConfig.oauth.redirectSignOut = `${window.location.origin}/`;
@@ -23,6 +26,7 @@ function AuthTest() {
 				Open Google
 			</button>
 			<button onClick={() => Auth.signOut()}>Sign Out</button>
+			<p>{JSON.stringify(username)}</p>
 		</div>
 	);
 }

@@ -1,13 +1,16 @@
 'use client';
-import { useState, useRef, useEffect, useContext } from 'react';
+import { useState, useRef, useEffect, useContext, useMemo } from 'react';
 import { webcamInit, callButton, answerButton } from '../components/webrtc/rtc';
 import { AuthContext } from './context';
-function WebRTCTest() {
+
+function WebRTCTest({ roomId }: { roomId: string }) {
 	const username = useContext(AuthContext);
 	const videoRef = useRef(null);
 	const remoteRef = useRef(null);
+	const websocket = useRef<WebSocket | null>(null);
 	const [localStream, setLocalStream] = useState<any>(null);
 	const [callInput, setCallInput] = useState('');
+
 	useEffect(() => {
 		const servers = {
 			iceServers: [
@@ -23,6 +26,43 @@ function WebRTCTest() {
 
 		const pc = new RTCPeerConnection(servers);
 		setLocalStream(pc);
+
+		const form = new FormData();
+		form.append('roomId', roomId);
+		const options = {
+			method: 'POST',
+			body: form,
+		};
+		fetch('http://localhost:8080/v1/createRoom', options).then((response) => {
+			console.log(response);
+			if (websocket.current == null) {
+				websocket.current = new WebSocket(
+					'ws://localhost:8080/ws?roomId=' + roomId,
+				);
+
+				websocket.current.addEventListener('error', (event: any) => {
+					console.log('WebSocket error: ', event);
+				});
+				websocket.current.onopen = function () {
+					console.log('connected');
+					if (response.status == 200) {
+						websocket.current!.send('Hello, Server!');
+					} else if (response.status == 208) {
+						websocket.current!.send('Hello, Server!1');
+					}
+				};
+				websocket.current.onmessage = function (message: any) {
+					console.log(message);
+					// websocket.current.send('Hello, Server!');
+				};
+				console.log('websocketing');
+			}
+		});
+
+		return () => {
+			console.log('closing websocket');
+			if (websocket.current) websocket.current.close();
+		};
 	}, []);
 
 	function webcamButtonClicked() {
@@ -35,11 +75,23 @@ function WebRTCTest() {
 			<div className="videos">
 				<span>
 					<h3>Local Stream</h3>
-					<video id="webcamVideo" ref={videoRef} autoPlay playsInline></video>
+					<video
+						id="webcamVideo"
+						ref={videoRef}
+						autoPlay
+						playsInline
+						controls
+					></video>
 				</span>
 				<span>
 					<h3>Remote Stream</h3>
-					<video id="remoteVideo" ref={remoteRef} autoPlay playsInline></video>
+					<video
+						id="remoteVideo"
+						ref={remoteRef}
+						autoPlay
+						playsInline
+						controls
+					></video>
 				</span>
 			</div>
 
