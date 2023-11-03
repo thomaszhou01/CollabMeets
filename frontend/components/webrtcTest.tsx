@@ -1,7 +1,15 @@
 'use client';
 import { useState, useRef, useEffect, useContext, useMemo } from 'react';
-import { webcamInit, callButton, answerButton } from '../components/webrtc/rtc';
+import {
+	webcamInit,
+	callButton,
+	answerButton,
+	iceServers,
+	callButtonBack,
+} from '../components/webrtc/rtc';
+import '../components/webrtc/rtcMultiConnect';
 import { AuthContext } from './context';
+const { v4: uuidv4 } = require('uuid');
 
 function WebRTCTest({ roomId }: { roomId: string }) {
 	const username = useContext(AuthContext);
@@ -9,22 +17,11 @@ function WebRTCTest({ roomId }: { roomId: string }) {
 	const remoteRef = useRef(null);
 	const websocket = useRef<WebSocket | null>(null);
 	const [localStream, setLocalStream] = useState<any>(null);
+	const [userId, setUserId] = useState('');
 	const [callInput, setCallInput] = useState('');
 
 	useEffect(() => {
-		const servers = {
-			iceServers: [
-				{
-					urls: [
-						'stun:stun1.l.google.com:19302',
-						'stun:stun2.l.google.com:19302',
-					],
-				},
-			],
-			iceCandidatePoolSize: 10,
-		};
-
-		const pc = new RTCPeerConnection(servers);
+		const pc = new RTCPeerConnection(iceServers);
 		setLocalStream(pc);
 
 		const form = new FormData();
@@ -36,37 +33,40 @@ function WebRTCTest({ roomId }: { roomId: string }) {
 		fetch('http://localhost:8080/v1/createRoom', options).then((response) => {
 			console.log(response);
 			if (websocket.current == null) {
+				const user = uuidv4();
+				setUserId(user);
 				websocket.current = new WebSocket(
-					'ws://localhost:8080/ws?roomId=' + roomId,
+					'ws://localhost:8080/ws?roomId=' + roomId + '&userId=' + user,
 				);
 
 				websocket.current.addEventListener('error', (event: any) => {
 					console.log('WebSocket error: ', event);
 				});
+
 				websocket.current.onopen = function () {
 					console.log('connected');
 					if (response.status == 200) {
-						websocket.current!.send('Hello, Server!');
+						websocket.current!.send(user);
 					} else if (response.status == 208) {
-						websocket.current!.send('Hello, Server!1');
+						websocket.current!.send(user);
 					}
 				};
-				websocket.current.onmessage = function (message: any) {
-					console.log(message);
+
+				websocket.current.onmessage = function (message: MessageEvent) {
+					console.log(message.data);
 					// websocket.current.send('Hello, Server!');
 				};
 				console.log('websocketing');
 			}
 		});
-
 		return () => {
 			console.log('closing websocket');
 			if (websocket.current) websocket.current.close();
 		};
 	}, []);
 
-	function webcamButtonClicked() {
-		webcamInit(videoRef, remoteRef, localStream);
+	function hostStart() {
+		callButton(localStream);
 	}
 
 	return (
@@ -94,15 +94,18 @@ function WebRTCTest({ roomId }: { roomId: string }) {
 					></video>
 				</span>
 			</div>
+			<p>{userId}</p>
 
-			<button id="webcamButton" onClick={webcamButtonClicked}>
-				Start webcam
-			</button>
-			<h2>2. Create a new Call</h2>
 			<button
-				id="callButton"
-				onClick={() => callButton(videoRef, remoteRef, localStream)}
+				onClick={() => callButtonBack(localStream, websocket.current, roomId)}
 			>
+				Test
+			</button>
+			<button onClick={() => webcamInit(videoRef, remoteRef, localStream)}>
+				Webcam Init
+			</button>
+
+			<button id="callButton" onClick={hostStart}>
 				Create Call (offer)
 			</button>
 

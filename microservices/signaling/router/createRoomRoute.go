@@ -20,10 +20,11 @@ func createRroom(group *gin.RouterGroup) {
 		go hub.Run()
 		hubs[roomId] = hub
 
-		mapping := make(map[string]string)
-		mapping["test"] = "test123"
+		mapping := []string{"hub", "roomId"}
+		mapping = append(mapping, "lol")
+		mapping = append(mapping, "test")
 
-		redisWrapper.AddKey(redis, roomId, mapping)
+		redisWrapper.AddKeyHash(redis, roomId, mapping)
 		fmt.Println(roomId, "at hub ", hub, " total there are ", len(hubs), " hubs")
 		c.String(200, roomId)
 	})

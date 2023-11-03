@@ -9,7 +9,7 @@ import (
 type Hub struct {
 	clients map[*Client]bool
 
-	broadcast chan []byte
+	broadcast chan BroadcastMessage
 
 	register chan *Client
 
@@ -24,12 +24,18 @@ type Hub struct {
 	redis *redis.Client
 }
 
+type BroadcastMessage struct {
+	from string
+
+	data []byte
+}
+
 func NewHub(hubID string, hub *map[string]*Hub, redis *redis.Client) *Hub {
 	return &Hub{
 		hub:        hub,
 		hubID:      hubID,
 		redis:      redis,
-		broadcast:  make(chan []byte),
+		broadcast:  make(chan BroadcastMessage),
 		register:   make(chan *Client),
 		unregister: make(chan *Client),
 		clients:    make(map[*Client]bool),
@@ -43,6 +49,7 @@ func (h *Hub) Run() {
 			h.clients[client] = true
 			if !h.entered {
 				h.entered = true
+				client.isHost = true
 			}
 			fmt.Println(len(h.clients), " clients in hub ", &h)
 		case client := <-h.unregister:
@@ -55,17 +62,15 @@ func (h *Hub) Run() {
 				}
 			}
 		case message := <-h.broadcast:
-			if h.entered && len(h.clients) == 0 {
-				fmt.Println("Hub ", &h, " closing")
-				break
-			}
 			for client := range h.clients {
+				if client.clientId == message.from {
+					continue
+				}
 				select {
-				case client.send <- message:
+				case client.send <- message.data:
 				default:
 					close(client.send)
 					delete(h.clients, client)
-
 				}
 			}
 		default:

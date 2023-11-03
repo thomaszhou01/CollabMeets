@@ -17,6 +17,10 @@ type Client struct {
 	conn *websocket.Conn
 
 	send chan []byte
+
+	clientId string
+
+	isHost bool
 }
 
 const (
@@ -57,7 +61,7 @@ func (c *Client) ReadMessage() {
 			break
 		}
 		message = bytes.TrimSpace(bytes.Replace(message, newline, space, -1))
-		c.hub.broadcast <- message
+		c.hub.broadcast <- BroadcastMessage{c.clientId, message}
 	}
 }
 
@@ -101,7 +105,7 @@ func (c *Client) WriteMessage() {
 	}
 }
 
-func ServeWS(hub *Hub, c *gin.Context) {
+func ServeWS(c *gin.Context, hub *Hub, userId string) {
 	upgrader.CheckOrigin = func(r *http.Request) bool {
 		origin := r.Header.Get("Origin")
 		//Add additional connections here
@@ -112,11 +116,11 @@ func ServeWS(hub *Hub, c *gin.Context) {
 
 	conn, err := upgrader.Upgrade(c.Writer, c.Request, nil)
 	if err != nil {
-		log.Println(err, "uh oh")
+		log.Println(err, "uh oh error")
 		return
 	}
 
-	client := &Client{hub: hub, conn: conn, send: make(chan []byte, 256)}
+	client := &Client{hub: hub, conn: conn, send: make(chan []byte, 256), clientId: userId, isHost: false}
 	client.hub.register <- client
 
 	// goroutines

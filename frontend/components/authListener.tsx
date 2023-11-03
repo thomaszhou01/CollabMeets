@@ -1,12 +1,17 @@
 'use client';
 import React, { useEffect, useState, createContext } from 'react';
-import { Auth, Hub } from 'aws-amplify';
+import { Amplify, Auth, Hub } from 'aws-amplify';
 import { AuthProvider } from './context';
+import awsConfig from '../app/aws-exports';
 
 function AuthListener({ children }: { children: React.ReactNode }) {
 	const [user, setUser] = useState(null);
 
 	useEffect(() => {
+		awsConfig.oauth.redirectSignIn = `${window.location.origin}/`;
+		awsConfig.oauth.redirectSignOut = `${window.location.origin}/`;
+		Amplify.configure(awsConfig);
+
 		const unsubscribe = Hub.listen('auth', ({ payload: { event, data } }) => {
 			switch (event) {
 				case 'signIn':

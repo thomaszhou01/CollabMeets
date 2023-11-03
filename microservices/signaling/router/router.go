@@ -21,7 +21,7 @@ func StartRouter() {
 	{
 		createRroom(v1)
 	}
-	redisWrapper.Test(redis)
+	// redisWrapper.Test(redis)
 	router.GET("/ws", WebsocketRoute)
 	router.Run(":8080")
 }
