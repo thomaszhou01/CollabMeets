@@ -1,10 +1,11 @@
 package messaging
 
 import (
-	"bytes"
+	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
+	"screenshare/signaling/interfaces"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -16,7 +17,7 @@ type Client struct {
 
 	conn *websocket.Conn
 
-	send chan []byte
+	send chan BroadcastMessage
 
 	clientId string
 
@@ -60,8 +61,11 @@ func (c *Client) ReadMessage() {
 			}
 			break
 		}
-		message = bytes.TrimSpace(bytes.Replace(message, newline, space, -1))
-		c.hub.broadcast <- BroadcastMessage{c.clientId, message}
+		// message = bytes.TrimSpace(bytes.Replace(message, newline, space, -1))
+		var result interfaces.Message
+		json.Unmarshal([]byte(message), &result)
+
+		c.hub.broadcast <- BroadcastMessage{c.clientId, result.Target, []byte(result.User + result.ActionCode + result.Target), result}
 	}
 }
 
@@ -84,14 +88,18 @@ func (c *Client) WriteMessage() {
 			if err != nil {
 				return
 			}
-			w.Write(message)
-
-			// Add queued chat messages to the current websocket message.
-			n := len(c.send)
-			for i := 0; i < n; i++ {
-				w.Write(newline)
-				w.Write(<-c.send)
+			messageJson, errJson := json.Marshal(message.WebsocketMessage)
+			if errJson != nil {
+				log.Println(errJson)
 			}
+			w.Write([]byte(messageJson))
+
+			// // Add queued chat messages to the current websocket message.
+			// n := len(c.send)
+			// for i := 0; i < n; i++ {
+			// 	w.Write(newline)
+			// 	w.Write(<-c.send)
+			// }
 
 			if err := w.Close(); err != nil {
 				return
@@ -120,7 +128,7 @@ func ServeWS(c *gin.Context, hub *Hub, userId string) {
 		return
 	}
 
-	client := &Client{hub: hub, conn: conn, send: make(chan []byte, 256), clientId: userId, isHost: false}
+	client := &Client{hub: hub, conn: conn, send: make(chan BroadcastMessage), clientId: userId, isHost: false}
 	client.hub.register <- client
 
 	// goroutines

@@ -2,7 +2,7 @@ package router
 
 import (
 	"fmt"
-	messaging "screenshare/signaling/clients"
+	"screenshare/signaling/messaging"
 	redisWrapper "screenshare/signaling/redis"
 
 	"github.com/gin-gonic/gin"

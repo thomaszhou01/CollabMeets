@@ -1,7 +1,7 @@
 package router
 
 import (
-	messaging "screenshare/signaling/clients"
+	"screenshare/signaling/messaging"
 	"screenshare/signaling/middleware"
 	redisWrapper "screenshare/signaling/redis"
 

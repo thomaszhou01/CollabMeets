@@ -2,7 +2,7 @@ package router
 
 import (
 	"log"
-	messaging "screenshare/signaling/clients"
+	"screenshare/signaling/messaging"
 
 	"github.com/gin-gonic/gin"
 )

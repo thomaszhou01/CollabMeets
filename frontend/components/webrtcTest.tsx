@@ -11,6 +11,20 @@ import '../components/webrtc/rtcMultiConnect';
 import { AuthContext } from './context';
 const { v4: uuidv4 } = require('uuid');
 
+interface WebsocketMessage {
+	User: string;
+	ActionCode: string;
+	Target: string;
+	IceCandidates: IceMessage[];
+}
+
+interface IceMessage {
+	Candidate: string;
+	SdpMid: string;
+	SdpMLineIndex: number;
+	UsernameFragment: string;
+}
+
 function WebRTCTest({ roomId }: { roomId: string }) {
 	const username = useContext(AuthContext);
 	const videoRef = useRef(null);
@@ -44,16 +58,22 @@ function WebRTCTest({ roomId }: { roomId: string }) {
 				});
 
 				websocket.current.onopen = function () {
-					console.log('connected');
+					const message: WebsocketMessage = {
+						User: user,
+						ActionCode: 'lol',
+						Target: 'test',
+						IceCandidates: [],
+					};
 					if (response.status == 200) {
-						websocket.current!.send(user);
+						websocket.current!.send(JSON.stringify(message));
 					} else if (response.status == 208) {
-						websocket.current!.send(user);
+						websocket.current!.send(JSON.stringify(message));
 					}
 				};
 
 				websocket.current.onmessage = function (message: MessageEvent) {
-					console.log(message.data);
+					const parsedMessage: WebsocketMessage = JSON.parse(message.data);
+					console.log(parsedMessage.User);
 					// websocket.current.send('Hello, Server!');
 				};
 				console.log('websocketing');

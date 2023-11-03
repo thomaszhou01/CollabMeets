@@ -2,6 +2,7 @@ package messaging
 
 import (
 	"fmt"
+	"screenshare/signaling/interfaces"
 
 	"github.com/redis/go-redis/v9"
 )
@@ -25,9 +26,13 @@ type Hub struct {
 }
 
 type BroadcastMessage struct {
-	from string
+	From string
 
-	data []byte
+	To string
+
+	Data []byte
+
+	WebsocketMessage interfaces.Message
 }
 
 func NewHub(hubID string, hub *map[string]*Hub, redis *redis.Client) *Hub {
@@ -63,11 +68,11 @@ func (h *Hub) Run() {
 			}
 		case message := <-h.broadcast:
 			for client := range h.clients {
-				if client.clientId == message.from {
+				if client.clientId == message.From && (message.To != "" && client.clientId != message.To) {
 					continue
 				}
 				select {
-				case client.send <- message.data:
+				case client.send <- message:
 				default:
 					close(client.send)
 					delete(h.clients, client)
