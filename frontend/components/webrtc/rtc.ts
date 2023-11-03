@@ -170,11 +170,9 @@ export async function answerButton(
 	const answerCandidates = collection(callDoc, 'answerCandidates');
 	const offerCandidates = collection(callDoc, 'offerCandidates');
 
-	// pc.onicecandidate = (event: any) => {
-	// 	event.candidate && addDoc(answerCandidates, event.candidate.toJSON());
-	// };
-
-	console.log('no answer candidates');
+	pc.onicecandidate = (event: any) => {
+		event.candidate && addDoc(answerCandidates, event.candidate.toJSON());
+	};
 
 	const callData = (await getDoc(callDoc)).data();
 
