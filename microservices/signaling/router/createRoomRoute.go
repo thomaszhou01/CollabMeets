@@ -4,15 +4,21 @@ import (
 	"fmt"
 	"screenshare/signaling/messaging"
 	redisWrapper "screenshare/signaling/redis"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 )
 
-func createRroom(group *gin.RouterGroup) {
+func createRoom(group *gin.RouterGroup) {
 	group.POST("/createRoom", func(c *gin.Context) {
 		roomId := c.PostForm("roomId")
 		if _, exists := hubs[roomId]; exists {
-			c.String(208, "already exists")
+			keys := ""
+			for k := range hubs[roomId].Clients {
+				keys = k.ClientId + " " + keys
+			}
+
+			c.String(208, strings.TrimRight(keys, " "))
 			return
 		}
 

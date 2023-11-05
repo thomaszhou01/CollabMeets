@@ -19,9 +19,9 @@ func StartRouter() {
 	router.Use(gin.Logger())
 	v1 := router.Group("/v1")
 	{
-		createRroom(v1)
+		createRoom(v1)
 	}
-	// redisWrapper.Test(redis)
+	redisWrapper.Test(redis)
 	router.GET("/ws", WebsocketRoute)
 	router.Run(":8080")
 }

@@ -62,7 +62,6 @@ export async function hostAddPlayer(
 	}
 
 	peerConnection.ontrack = (event: any) => {
-		console.log('got remote stream1');
 		event.streams[0].getTracks().forEach((track: any) => {
 			remoteMedia.addTrack(track);
 		});
@@ -73,7 +72,7 @@ export async function hostAddPlayer(
 		remoteStream.videoElement.play();
 	}
 
-	peerConnection.onicecandidate = (event: any) => {
+	peerConnection.onicecandidate = async (event: any) => {
 		if (event.candidate) {
 			const candidate = event.candidate.toJSON();
 			const iceMessage: WebsocketMessage = {
@@ -87,14 +86,14 @@ export async function hostAddPlayer(
 					UsernameFragment: candidate.usernameFragment,
 				},
 			};
-			console.log('ice message host:', iceMessage);
+			await new Promise((r) => setTimeout(r, 1000));
+			console.log('ice message host:');
 			websocket.send(JSON.stringify(iceMessage));
 		}
 	};
 
 	const offerDescription = await peerConnection.createOffer();
-	await peerConnection.setLocalDescription(offerDescription);
-
+	console.log('host offer');
 	const offer: PCOffer = {
 		Sdp: offerDescription.sdp ? offerDescription.sdp : '',
 		Type: offerDescription.type,
@@ -107,6 +106,8 @@ export async function hostAddPlayer(
 		PCOffer: offer,
 	};
 	websocket.send(JSON.stringify(offerMessage));
+
+	await peerConnection.setLocalDescription(offerDescription);
 }
 
 export async function recieverAddPlayerAndRespond(
@@ -128,7 +129,6 @@ export async function recieverAddPlayerAndRespond(
 	}
 
 	peerConnection.ontrack = (event: any) => {
-		console.log('got remote stream2');
 		event.streams[0].getTracks().forEach((track: any) => {
 			remoteMedia.addTrack(track);
 		});
@@ -153,7 +153,7 @@ export async function recieverAddPlayerAndRespond(
 					UsernameFragment: candidate.usernameFragment,
 				},
 			};
-			console.log('ice message answer:', iceMessage);
+			console.log('ice message answer:');
 			websocket.send(JSON.stringify(iceMessage));
 		}
 	};
@@ -164,9 +164,9 @@ export async function recieverAddPlayerAndRespond(
 			sdp: receivedOffer.Sdp,
 		}),
 	);
+	console.log('host established by answer');
 
 	const answerDescription = await peerConnection.createAnswer();
-	await peerConnection.setLocalDescription(answerDescription);
 
 	const answer: PCOffer = {
 		Sdp: answerDescription.sdp ? answerDescription.sdp : '',
@@ -180,6 +180,8 @@ export async function recieverAddPlayerAndRespond(
 		PCOffer: answer,
 	};
 	websocket.send(JSON.stringify(answerMessage));
+
+	await peerConnection.setLocalDescription(answerDescription);
 }
 
 export async function hostReceivePlayer(
@@ -190,8 +192,8 @@ export async function hostReceivePlayer(
 		type: receivedOffer.Type as RTCSdpType,
 		sdp: receivedOffer.Sdp,
 	});
-	console.log('answer desc:', answerDescription);
 	await peerConnection.setRemoteDescription(answerDescription);
+	console.log('answer established by host');
 }
 
 export async function addIceCandidate(
@@ -204,6 +206,7 @@ export async function addIceCandidate(
 		sdpMid: candidate.SdpMid,
 		usernameFragment: candidate.UsernameFragment,
 	};
+	console.log('add ice');
 	const iceCandidate = new RTCIceCandidate(iceCandidateInit);
 	peerConnection.addIceCandidate(iceCandidate);
 }

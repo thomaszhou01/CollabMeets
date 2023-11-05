@@ -149,6 +149,7 @@ export async function answerButton(
 		await pc.setRemoteDescription(new RTCSessionDescription(offerDescription));
 
 		const answerDescription = await pc.createAnswer();
+		console.log('answer created');
 		await pc.setLocalDescription(answerDescription);
 
 		const answer = {

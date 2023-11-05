@@ -19,7 +19,7 @@ type Client struct {
 
 	send chan BroadcastMessage
 
-	clientId string
+	ClientId string
 
 	isHost bool
 }
@@ -62,9 +62,9 @@ func (c *Client) ReadMessage() {
 		// message = bytes.TrimSpace(bytes.Replace(message, newline, space, -1))
 		var result interfaces.Message
 		json.Unmarshal([]byte(message), &result)
-		result.User = c.clientId
+		result.User = c.ClientId
 		fmt.Println("received message", result.ActionCode)
-		c.hub.broadcast <- BroadcastMessage{c.clientId, result.Target, result.ActionCode, []byte(result.ActionCode), result}
+		c.hub.broadcast <- BroadcastMessage{c.ClientId, result.Target, result.ActionCode, []byte(result.ActionCode), result}
 	}
 }
 
@@ -131,7 +131,7 @@ func ServeWS(c *gin.Context, hub *Hub, userId string) {
 		return
 	}
 
-	client := &Client{hub: hub, conn: conn, send: make(chan BroadcastMessage, 10000), clientId: userId, isHost: false}
+	client := &Client{hub: hub, conn: conn, send: make(chan BroadcastMessage, 10000), ClientId: userId, isHost: false}
 	client.hub.register <- client
 
 	// goroutines
