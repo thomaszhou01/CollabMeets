@@ -33,16 +33,27 @@ const app = initializeApp(firebaseConfig);
 
 const firestore = getFirestore(app);
 
-let localStream: MediaStream;
-let remoteStream: MediaStream;
-
-export async function webcamInit(videoRef: any, remoteRef: any, pc: any) {
+export async function webcamInit(
+	videoRef: HTMLVideoElement,
+	remoteRef: HTMLVideoElement,
+	pc: any,
+	testing: boolean,
+) {
+	let localStream: MediaStream;
 	//getDisplayMedia
-	localStream = await navigator.mediaDevices.getDisplayMedia({
-		video: true,
-		audio: true,
-	});
-	remoteStream = new MediaStream();
+	if (testing) {
+		localStream = await navigator.mediaDevices.getUserMedia({
+			video: false,
+			audio: true,
+		});
+	} else {
+		localStream = await navigator.mediaDevices.getDisplayMedia({
+			video: true,
+			audio: true,
+		});
+	}
+
+	let remoteStream = new MediaStream();
 	// Push tracks from local stream to peer connection
 	localStream.getTracks().forEach((track: any) => {
 		pc.addTrack(track, localStream);
@@ -53,19 +64,16 @@ export async function webcamInit(videoRef: any, remoteRef: any, pc: any) {
 		event.streams[0].getTracks().forEach((track: any) => {
 			remoteStream.addTrack(track);
 		});
-		console.log(pc);
+		remoteRef.srcObject = remoteStream;
+		remoteRef.play();
 	};
-	let video = videoRef.current;
-	video.srcObject = localStream;
-	video.play();
+	videoRef.srcObject = localStream;
+	videoRef.play();
 
-	let remote = remoteRef.current;
-	remote.srcObject = remoteStream;
-	remote.play();
 	// setRemote(remoteStream);
 }
 
-export async function callButton(pc: any) {
+export async function callButton(pc: RTCPeerConnection | undefined) {
 	// webcamInit(videoRef, remoteRef, pc);
 	// Reference Firestore collections for signaling
 	const callDoc = doc(collection(firestore, 'calls'));
@@ -76,85 +84,45 @@ export async function callButton(pc: any) {
 	console.log(callDoc.id);
 	alert(callDoc.id);
 
-	// Get candidates for caller, save to db
-	pc.onicecandidate = (event: any) => {
-		event.candidate && addDoc(offerCandidates, event.candidate.toJSON());
-		console.log(JSON.stringify(event.candidate.toJSON()));
-	};
+	if (pc) {
+		// Get candidates for caller, save to db
+		pc.onicecandidate = (event: any) => {
+			event.candidate && addDoc(offerCandidates, event.candidate.toJSON());
+			event.candidate && console.log('host ice');
+		};
 
-	// Create offer
-	const offerDescription = await pc.createOffer();
-	await pc.setLocalDescription(offerDescription);
+		// Create offer
+		const offerDescription = await pc.createOffer();
+		await pc.setLocalDescription(offerDescription);
 
-	const offer = {
-		sdp: offerDescription.sdp,
-		type: offerDescription.type,
-	};
+		const offer = {
+			sdp: offerDescription.sdp,
+			type: offerDescription.type,
+		};
 
-	await setDoc(callDoc, { offer });
+		await setDoc(callDoc, { offer });
 
-	// Listen for remote answer
-	onSnapshot(callDoc, (snapshot: any) => {
-		const data = snapshot.data();
-		if (!pc.currentRemoteDescription && data?.answer) {
-			const answerDescription = new RTCSessionDescription(data.answer);
-			pc.setRemoteDescription(answerDescription);
-		}
-	});
-
-	// When answered, add candidate to peer connection
-	onSnapshot(answerCandidates, (snapshot: any) => {
-		snapshot.docChanges().forEach((change: any) => {
-			if (change.type === 'added') {
-				const candidate = new RTCIceCandidate(change.doc.data());
-				pc.addIceCandidate(candidate);
-				console.log('answering candidates');
+		// Listen for remote answer
+		onSnapshot(callDoc, (snapshot: any) => {
+			const data = snapshot.data();
+			if (!pc.currentRemoteDescription && data?.answer) {
+				const answerDescription = new RTCSessionDescription(data.answer);
+				pc.setRemoteDescription(answerDescription);
+				console.log('remote answer');
 			}
 		});
-	});
-}
 
-export async function callButtonBack(pc: any, websocket: any, roomId: string) {
-	// Reference Firestore collections for signaling
-	const offerCandidates = roomId + ':offerCandidates';
-	const answerCandidates = roomId + ':answerCandidates';
-
-	// Get candidates for caller, save to db
-	pc.onicecandidate = (event: any) => {
-		event.candidate && websocket.send(JSON.stringify(event.candidate.toJSON()));
-		console.log(JSON.stringify(event.candidate.toJSON()));
-	};
-
-	// Create offer
-	const offerDescription = await pc.createOffer();
-	await pc.setLocalDescription(offerDescription);
-
-	const offer = {
-		sdp: offerDescription.sdp,
-		type: offerDescription.type,
-	};
-
-	// await setDoc(callDoc, { offer });
-
-	// // Listen for remote answer
-	// onSnapshot(callDoc, (snapshot: any) => {
-	// 	const data = snapshot.data();
-	// 	if (!pc.currentRemoteDescription && data?.answer) {
-	// 		const answerDescription = new RTCSessionDescription(data.answer);
-	// 		pc.setRemoteDescription(answerDescription);
-	// 	}
-	// });
-
-	// // When answered, add candidate to peer connection
-	// onSnapshot(answerCandidates, (snapshot: any) => {
-	// 	snapshot.docChanges().forEach((change: any) => {
-	// 		if (change.type === 'added') {
-	// 			const candidate = new RTCIceCandidate(change.doc.data());
-	// 			pc.addIceCandidate(candidate);
-	// 			console.log('answering candidates');
-	// 		}
-	// 	});
-	// });
+		// When answered, add candidate to peer connection
+		onSnapshot(answerCandidates, (snapshot: any) => {
+			snapshot.docChanges().forEach((change: any) => {
+				if (change.type === 'added') {
+					const candidate = new RTCIceCandidate(change.doc.data());
+					pc.addIceCandidate(candidate);
+					console.log('answering candidates');
+				}
+			});
+		});
+	}
 }
 
 // // 3. Answer the call with the unique ID
@@ -162,40 +130,42 @@ export async function answerButton(
 	videoRef: any,
 	remoteRef: any,
 	id: any,
-	pc: any,
+	pc: RTCPeerConnection | undefined,
 ) {
 	// webcamInit(videoRef, remoteRef, pc);
 	const callId = id;
 	const callDoc = doc(collection(firestore, 'calls'), callId);
 	const answerCandidates = collection(callDoc, 'answerCandidates');
 	const offerCandidates = collection(callDoc, 'offerCandidates');
+	if (pc) {
+		pc.onicecandidate = (event: any) => {
+			event.candidate && addDoc(answerCandidates, event.candidate.toJSON());
+			console.log('answer ice');
+		};
 
-	pc.onicecandidate = (event: any) => {
-		event.candidate && addDoc(answerCandidates, event.candidate.toJSON());
-	};
+		const callData = (await getDoc(callDoc)).data();
 
-	const callData = (await getDoc(callDoc)).data();
+		const offerDescription = callData?.offer;
+		await pc.setRemoteDescription(new RTCSessionDescription(offerDescription));
 
-	const offerDescription = callData?.offer;
-	await pc.setRemoteDescription(new RTCSessionDescription(offerDescription));
+		const answerDescription = await pc.createAnswer();
+		await pc.setLocalDescription(answerDescription);
 
-	const answerDescription = await pc.createAnswer();
-	await pc.setLocalDescription(answerDescription);
+		const answer = {
+			type: answerDescription.type,
+			sdp: answerDescription.sdp,
+		};
 
-	const answer = {
-		type: answerDescription.type,
-		sdp: answerDescription.sdp,
-	};
+		await updateDoc(callDoc, { answer });
 
-	await updateDoc(callDoc, { answer });
-
-	onSnapshot(offerCandidates, (snapshot: any) => {
-		snapshot.docChanges().forEach((change: any) => {
-			console.log(change);
-			if (change.type === 'added') {
-				let data = change.doc.data();
-				pc.addIceCandidate(new RTCIceCandidate(data));
-			}
+		onSnapshot(offerCandidates, (snapshot: any) => {
+			snapshot.docChanges().forEach((change: any) => {
+				if (change.type === 'added') {
+					let data = change.doc.data();
+					pc.addIceCandidate(new RTCIceCandidate(data));
+					console.log('answering offer');
+				}
+			});
 		});
-	});
+	}
 }

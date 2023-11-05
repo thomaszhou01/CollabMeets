@@ -30,6 +30,8 @@ type BroadcastMessage struct {
 
 	To string
 
+	Action string
+
 	Data []byte
 
 	WebsocketMessage interfaces.Message
@@ -68,7 +70,7 @@ func (h *Hub) Run() {
 			}
 		case message := <-h.broadcast:
 			for client := range h.clients {
-				if client.clientId == message.From && (message.To != "" && client.clientId != message.To) {
+				if client.clientId == message.From || (message.To != "" && client.clientId != message.To) {
 					continue
 				}
 				select {

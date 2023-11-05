@@ -30,8 +30,6 @@ const (
 	pongWait = 60 * time.Second
 
 	pingPeriod = (pongWait * 9) / 10
-
-	maxMessageSize = 512
 )
 
 var upgrader = websocket.Upgrader{
@@ -49,7 +47,7 @@ func (c *Client) ReadMessage() {
 		c.hub.unregister <- c
 		c.conn.Close()
 	}()
-	c.conn.SetReadLimit(maxMessageSize)
+
 	c.conn.SetReadDeadline(time.Now().Add(pongWait))
 	c.conn.SetPongHandler(func(string) error { c.conn.SetReadDeadline(time.Now().Add(pongWait)); return nil })
 
@@ -64,8 +62,9 @@ func (c *Client) ReadMessage() {
 		// message = bytes.TrimSpace(bytes.Replace(message, newline, space, -1))
 		var result interfaces.Message
 		json.Unmarshal([]byte(message), &result)
-
-		c.hub.broadcast <- BroadcastMessage{c.clientId, result.Target, []byte(result.User + result.ActionCode + result.Target), result}
+		result.User = c.clientId
+		fmt.Println("received message", result.ActionCode)
+		c.hub.broadcast <- BroadcastMessage{c.clientId, result.Target, result.ActionCode, []byte(result.ActionCode), result}
 	}
 }
 
@@ -84,20 +83,24 @@ func (c *Client) WriteMessage() {
 				return
 			}
 
-			w, err := c.conn.NextWriter(websocket.TextMessage)
-			if err != nil {
-				return
-			}
 			messageJson, errJson := json.Marshal(message.WebsocketMessage)
 			if errJson != nil {
 				log.Println(errJson)
 			}
+
+			w, err := c.conn.NextWriter(websocket.TextMessage)
+			if err != nil {
+				return
+			}
 			w.Write([]byte(messageJson))
 
-			// // Add queued chat messages to the current websocket message.
+			// if message.Action == "new" {
+			// 	c.hub.broadcast <- BroadcastMessage{c.clientId, message.From, "returnNew", []byte(message.From), interfaces.Message{User: c.clientId, ActionCode: "new", Target: message.From, IceCandidates: []interfaces.ICECandidate{}}}
+			// }
+
+			//Add queued chat messages to the current websocket message.
 			// n := len(c.send)
 			// for i := 0; i < n; i++ {
-			// 	w.Write(newline)
 			// 	w.Write(<-c.send)
 			// }
 
@@ -128,7 +131,7 @@ func ServeWS(c *gin.Context, hub *Hub, userId string) {
 		return
 	}
 
-	client := &Client{hub: hub, conn: conn, send: make(chan BroadcastMessage), clientId: userId, isHost: false}
+	client := &Client{hub: hub, conn: conn, send: make(chan BroadcastMessage, 10000), clientId: userId, isHost: false}
 	client.hub.register <- client
 
 	// goroutines

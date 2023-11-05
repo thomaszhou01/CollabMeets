@@ -1,8 +1,8 @@
 'use client';
 import React, { useEffect, useState, createContext } from 'react';
 import { Amplify, Auth, Hub } from 'aws-amplify';
-import { AuthProvider } from './context';
-import awsConfig from '../app/aws-exports';
+import { AuthProvider } from '../contexts/authContext';
+import awsConfig from '../../app/aws-exports';
 
 function AuthListener({ children }: { children: React.ReactNode }) {
 	const [user, setUser] = useState(null);

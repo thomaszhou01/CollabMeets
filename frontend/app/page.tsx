@@ -1,5 +1,5 @@
 import WebRTCTest from '@/components/webrtcTest';
-import AuthTest from '@/components/authTest';
+import AuthTest from '@/components/auth/authTest';
 import Link from 'next/link';
 const { v4: uuidv4 } = require('uuid');
 

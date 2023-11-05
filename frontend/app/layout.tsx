@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
-import AuthListener from '@/components/authListener';
+import AuthListener from '@/components/auth/authListener';
 
 import './globals.css';
 
