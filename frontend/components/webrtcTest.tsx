@@ -223,7 +223,7 @@ function WebRTCTest({ roomId }: { roomId: string }) {
 	async function startLocalStream() {
 		const localStream = localMedia.current.videoElement;
 		if (localStream) {
-			localMedia.current.mediaStream = await startLocal(localStream, false);
+			localMedia.current.mediaStream = await startLocal(localStream, true);
 			// await new Promise((r) => setTimeout(r, 5000));
 			// console.log('after pause');
 			// localStream.srcObject = null;
