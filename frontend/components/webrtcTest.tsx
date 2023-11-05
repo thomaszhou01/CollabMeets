@@ -125,7 +125,7 @@ function WebRTCTest({ roomId }: { roomId: string }) {
 							);
 							break;
 					}
-					console.log(parsedMessage.ActionCode);
+					// console.log(parsedMessage.ActionCode);
 					// console.log(parsedMessage.User, parsedMessage);
 				};
 			}
