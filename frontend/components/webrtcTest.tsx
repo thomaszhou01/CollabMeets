@@ -103,7 +103,6 @@ function WebRTCTest({ roomId }: { roomId: string }) {
 								misc: parsedMessage.PCOffer,
 							});
 							setConnectionUsers((prev) => [...prev, parsedMessage.User]);
-							console.log(parsedMessage.ActionCode);
 							break;
 						case 'ice':
 							if (thisCon && parsedMessage.IceCandidates) {
@@ -126,6 +125,7 @@ function WebRTCTest({ roomId }: { roomId: string }) {
 							);
 							break;
 					}
+					console.log(parsedMessage.ActionCode);
 					// console.log(parsedMessage.User, parsedMessage);
 				};
 			}

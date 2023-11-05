@@ -87,6 +87,7 @@ export async function hostAddPlayer(
 					UsernameFragment: candidate.usernameFragment,
 				},
 			};
+			console.log('ice message host:', iceMessage);
 			websocket.send(JSON.stringify(iceMessage));
 		}
 	};
@@ -152,6 +153,7 @@ export async function recieverAddPlayerAndRespond(
 					UsernameFragment: candidate.usernameFragment,
 				},
 			};
+			console.log('ice message answer:', iceMessage);
 			websocket.send(JSON.stringify(iceMessage));
 		}
 	};
