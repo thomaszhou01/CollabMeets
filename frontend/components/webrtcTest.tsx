@@ -63,14 +63,22 @@ function WebRTCTest({ roomId }: { roomId: string }) {
 			method: 'POST',
 			body: form,
 		};
-		fetch('http://localhost:8080/v1/createRoom', options).then((response) => {
+		fetch(
+			'http://' + process.env.NEXT_PUBLIC_SIGNALING + '/v1/createRoom',
+			options,
+		).then((response) => {
 			console.log(response);
 			if (!websocket.current) {
 				const user = uuidv4();
 				setUserId(user);
 
 				websocket.current = new WebSocket(
-					'ws://localhost:8080/ws?roomId=' + roomId + '&userId=' + user,
+					'ws://' +
+						process.env.NEXT_PUBLIC_SIGNALING +
+						'/ws?roomId=' +
+						roomId +
+						'&userId=' +
+						user,
 				);
 
 				websocket.current.addEventListener('error', (event: any) => {
