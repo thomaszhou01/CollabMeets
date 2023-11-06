@@ -94,7 +94,7 @@ function WebRTCTest({ roomId }: { roomId: string }) {
 					switch (parsedMessage.ActionCode) {
 						case 'pcOffer':
 						case 'new':
-							//remove to test: iceServers
+							console.log(parsedMessage.ActionCode);
 							let pcTemp = new RTCPeerConnection(iceServers);
 							connections.current.set(parsedMessage.User, pcTemp);
 							lastEdited.current.push({
@@ -125,8 +125,6 @@ function WebRTCTest({ roomId }: { roomId: string }) {
 							);
 							break;
 					}
-					// console.log(parsedMessage.ActionCode);
-					// console.log(parsedMessage.User, parsedMessage);
 				};
 			}
 		});
@@ -199,6 +197,8 @@ function WebRTCTest({ roomId }: { roomId: string }) {
 							websocket.current!,
 							editCommand.misc,
 						);
+					} else {
+						lastEdited.current.push(editCommand);
 					}
 				} else if (editCommand.command == 'delete') {
 					mediaStreams.current.delete(editCommand.user);
@@ -231,7 +231,7 @@ function WebRTCTest({ roomId }: { roomId: string }) {
 	}
 
 	async function test() {
-		console.log(connections.current, mediaStreams.current);
+		console.log(connections.current, mediaStreams.current, connectionUsers);
 	}
 
 	if (inSetup)

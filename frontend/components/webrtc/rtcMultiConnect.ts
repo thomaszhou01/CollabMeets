@@ -72,7 +72,7 @@ export async function hostAddPlayer(
 		remoteStream.videoElement.play();
 	}
 
-	peerConnection.onicecandidate = async (event: any) => {
+	peerConnection.onicecandidate = (event: any) => {
 		if (event.candidate) {
 			const candidate = event.candidate.toJSON();
 			const iceMessage: WebsocketMessage = {
@@ -86,14 +86,11 @@ export async function hostAddPlayer(
 					UsernameFragment: candidate.usernameFragment,
 				},
 			};
-			await new Promise((r) => setTimeout(r, 1000));
-			console.log('ice message host:');
 			websocket.send(JSON.stringify(iceMessage));
 		}
 	};
 
 	const offerDescription = await peerConnection.createOffer();
-	console.log('host offer');
 	const offer: PCOffer = {
 		Sdp: offerDescription.sdp ? offerDescription.sdp : '',
 		Type: offerDescription.type,
@@ -153,7 +150,6 @@ export async function recieverAddPlayerAndRespond(
 					UsernameFragment: candidate.usernameFragment,
 				},
 			};
-			console.log('ice message answer:');
 			websocket.send(JSON.stringify(iceMessage));
 		}
 	};
@@ -193,7 +189,6 @@ export async function hostReceivePlayer(
 		sdp: receivedOffer.Sdp,
 	});
 	await peerConnection.setRemoteDescription(answerDescription);
-	console.log('answer established by host');
 }
 
 export async function addIceCandidate(
@@ -206,7 +201,12 @@ export async function addIceCandidate(
 		sdpMid: candidate.SdpMid,
 		usernameFragment: candidate.UsernameFragment,
 	};
-	console.log('add ice');
 	const iceCandidate = new RTCIceCandidate(iceCandidateInit);
+	let numWait = 0;
+	while (peerConnection.remoteDescription === null && numWait < 20) {
+		await new Promise((r) => setTimeout(r, 100));
+		console.log('had to wait');
+		numWait += 1;
+	}
 	peerConnection.addIceCandidate(iceCandidate);
 }
