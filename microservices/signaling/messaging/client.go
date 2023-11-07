@@ -2,7 +2,6 @@ package messaging
 
 import (
 	"encoding/json"
-	"fmt"
 	"log"
 	"net/http"
 	"screenshare/signaling/interfaces"
@@ -55,7 +54,7 @@ func (c *Client) ReadMessage() {
 		_, message, err := c.conn.ReadMessage()
 		if err != nil {
 			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
-				fmt.Printf("error: %v", err)
+				log.Printf("error: %v", err)
 			}
 			break
 		}
@@ -63,7 +62,6 @@ func (c *Client) ReadMessage() {
 		var result interfaces.Message
 		json.Unmarshal([]byte(message), &result)
 		result.User = c.ClientId
-		fmt.Println("received message", result.ActionCode)
 		c.hub.broadcast <- BroadcastMessage{c.ClientId, result.Target, result.ActionCode, []byte(result.ActionCode), result}
 	}
 }

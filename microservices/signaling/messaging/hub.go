@@ -1,7 +1,7 @@
 package messaging
 
 import (
-	"fmt"
+	"log"
 	"screenshare/signaling/interfaces"
 
 	"github.com/redis/go-redis/v9"
@@ -58,13 +58,13 @@ func (h *Hub) Run() {
 				h.entered = true
 				client.isHost = true
 			}
-			fmt.Println(len(h.Clients), " clients in hub ", &h)
+			log.Println(len(h.Clients), " clients in hub ", &h)
 		case client := <-h.unregister:
 			if _, ok := h.Clients[client]; ok {
 				delete(h.Clients, client)
 				close(client.send)
 				if h.entered && len(h.Clients) == 0 {
-					fmt.Println("Hub ", &h, " closing")
+					log.Println("Hub ", &h, " closing")
 					break
 				}
 			}
@@ -83,7 +83,7 @@ func (h *Hub) Run() {
 		default:
 			if h.entered && len(h.Clients) == 0 {
 				delete(*h.hub, h.hubID)
-				fmt.Println("Hub ", &h, " closing. There are ", len(*h.hub), " hubs left")
+				log.Println("Hub ", &h, " closing. There are ", len(*h.hub), " hubs left")
 				goto end
 			}
 		}

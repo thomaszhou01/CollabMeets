@@ -64,7 +64,7 @@ function WebRTCTest({ roomId }: { roomId: string }) {
 			body: form,
 		};
 		fetch(
-			'http://' + process.env.NEXT_PUBLIC_SIGNALING + '/v1/createRoom',
+			'https://' + process.env.NEXT_PUBLIC_GATEWAY + '/signaling/v1/createRoom',
 			options,
 		).then((response) => {
 			console.log(response);
@@ -73,9 +73,9 @@ function WebRTCTest({ roomId }: { roomId: string }) {
 				setUserId(user);
 
 				websocket.current = new WebSocket(
-					'ws://' +
-						process.env.NEXT_PUBLIC_SIGNALING +
-						'/ws?roomId=' +
+					'wss://' +
+						process.env.NEXT_PUBLIC_GATEWAY +
+						'/signaling/ws?roomId=' +
 						roomId +
 						'&userId=' +
 						user,
