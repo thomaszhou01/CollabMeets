@@ -1,14 +1,11 @@
-import WebRTCTest from '@/components/webrtcTest';
-import AuthTest from '@/components/auth/authTest';
-import Link from 'next/link';
-const { v4: uuidv4 } = require('uuid');
+import Header from '@/components/mainMenu/header';
+import Hero from '@/components/mainMenu/hero';
 
 export default function Home() {
 	return (
-		<div>
-			<p>This is part of serverside</p>
-			<Link href={'/room/' + uuidv4()}>Go to room with id: room1</Link>
-			<AuthTest />
+		<div className="h-[100vh]">
+			<Header />
+			<Hero />
 		</div>
 	);
 }

@@ -5,7 +5,7 @@ import { AuthProvider } from '../contexts/authContext';
 import awsConfig from '../../app/aws-exports';
 
 function AuthListener({ children }: { children: React.ReactNode }) {
-	const [user, setUser] = useState(null);
+	const [user, setUser] = useState('');
 
 	useEffect(() => {
 		awsConfig.oauth.redirectSignIn = `${window.location.origin}/`;
@@ -15,15 +15,13 @@ function AuthListener({ children }: { children: React.ReactNode }) {
 		const unsubscribe = Hub.listen('auth', ({ payload: { event, data } }) => {
 			switch (event) {
 				case 'signIn':
-					console.log('signed in', data);
-					setUser(data);
+					setUser(data.attributes.email);
 					break;
 				case 'signOut':
-					console.log('signed out');
-					setUser(null);
+					setUser('');
 					break;
 				case 'customOAuthState':
-					console.log('custom oath state: ');
+					break;
 			}
 		});
 
@@ -35,10 +33,8 @@ function AuthListener({ children }: { children: React.ReactNode }) {
 	const getUser = async (): Promise<void> => {
 		try {
 			const currentUser = await Auth.currentAuthenticatedUser();
-			setUser(currentUser);
-		} catch (error) {
-			console.log('Not signed in');
-		}
+			setUser(currentUser.attributes.email);
+		} catch (error) {}
 	};
 	return <AuthProvider value={user}>{children}</AuthProvider>;
 }

@@ -5,10 +5,8 @@ import { CognitoHostedUIIdentityProvider } from '@aws-amplify/auth';
 import { AuthContext } from '../contexts/authContext';
 
 function AuthTest() {
-	const username = useContext(AuthContext);
-
 	return (
-		<div className="App">
+		<div className="absolute right-0 top-0 m-2">
 			<button onClick={() => Auth.federatedSignIn()}>Open Hosted UI</button>
 			<button
 				onClick={() =>
@@ -20,7 +18,6 @@ function AuthTest() {
 				Open Google
 			</button>
 			<button onClick={() => Auth.signOut()}>Sign Out</button>
-			<p>{JSON.stringify(username)}</p>
 		</div>
 	);
 }

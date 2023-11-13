@@ -1,5 +1,6 @@
 export interface WebsocketMessage {
 	User: string;
+	Username: string;
 	Target: string;
 	ActionCode: string;
 	IceCandidates?: IceMessage;
@@ -26,6 +27,7 @@ export interface Stream {
 
 export interface StreamMedia {
 	user: string;
+	username: string;
 	videoElement: HTMLVideoElement | null;
 	mediaStream: MediaStream | null;
 }
@@ -34,4 +36,9 @@ export interface LastEdited {
 	command: string;
 	user: string;
 	misc?: any;
+}
+
+export interface Connections {
+	user: string;
+	username: string;
 }

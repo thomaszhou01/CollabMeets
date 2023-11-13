@@ -6,7 +6,7 @@ import {
 	PCOffer,
 } from '../types/types';
 
-const iceServers = {
+export const iceServers = {
 	iceServers: [
 		{
 			urls: ['stun:stun1.l.google.com:19302', 'stun:stun2.l.google.com:19302'],
@@ -15,23 +15,33 @@ const iceServers = {
 	iceCandidatePoolSize: 10,
 };
 
-export async function startLocal(
-	curMediaStream: HTMLVideoElement,
-	testing: boolean,
-) {
-	let localStream: MediaStream;
+export async function startLocal(curMediaStream: HTMLVideoElement) {
+	let localStream: MediaStream = await navigator.mediaDevices.getUserMedia({
+		video: true,
+		audio: true,
+	});
+	localStream.getAudioTracks()[0].enabled =
+		!localStream.getAudioTracks()[0].enabled;
 
-	if (testing) {
-		localStream = await navigator.mediaDevices.getUserMedia({
-			video: false,
-			audio: true,
-		});
-	} else {
-		localStream = await navigator.mediaDevices.getDisplayMedia({
-			video: true,
-			audio: true,
-		});
-	}
+	localStream.getVideoTracks()[0].enabled =
+		!localStream.getVideoTracks()[0].enabled;
+
+	// if (testing) {
+	// 	localStream = await navigator.mediaDevices.getUserMedia({
+	// 		video: true,
+	// 		audio: true,
+	// 	});
+	// 	// localStream.getAudioTracks()[0].enabled =
+	// 	// 	!localStream.getAudioTracks()[0].enabled;
+
+	// 	// localStream.getVideoTracks()[0].enabled =
+	// 	// 	!localStream.getVideoTracks()[0].enabled;
+	// } else {
+	// 	localStream = await navigator.mediaDevices.getDisplayMedia({
+	// 		video: true,
+	// 		audio: true,
+	// 	});
+	// }
 
 	curMediaStream.srcObject = localStream;
 	curMediaStream.play();
@@ -46,6 +56,7 @@ export async function startLocal(
 
 export async function hostAddPlayer(
 	userId: string,
+	username: string,
 	sendToId: string,
 	localStream: StreamMedia,
 	remoteStream: StreamMedia,
@@ -70,6 +81,7 @@ export async function hostAddPlayer(
 	if (remoteStream.videoElement) {
 		remoteStream.videoElement.srcObject = remoteMedia;
 		remoteStream.videoElement.play();
+		remoteStream.mediaStream = remoteMedia;
 	}
 
 	peerConnection.onicecandidate = (event: any) => {
@@ -77,6 +89,7 @@ export async function hostAddPlayer(
 			const candidate = event.candidate.toJSON();
 			const iceMessage: WebsocketMessage = {
 				User: userId,
+				Username: username,
 				ActionCode: 'ice',
 				Target: sendToId,
 				IceCandidates: {
@@ -98,6 +111,7 @@ export async function hostAddPlayer(
 
 	const offerMessage: WebsocketMessage = {
 		User: userId,
+		Username: username,
 		ActionCode: 'pcOffer',
 		Target: sendToId,
 		PCOffer: offer,
@@ -109,6 +123,7 @@ export async function hostAddPlayer(
 
 export async function recieverAddPlayerAndRespond(
 	userId: string,
+	username: string,
 	sendToId: string,
 	localStream: StreamMedia,
 	remoteStream: StreamMedia,
@@ -134,6 +149,7 @@ export async function recieverAddPlayerAndRespond(
 	if (remoteStream.videoElement) {
 		remoteStream.videoElement.srcObject = remoteMedia;
 		remoteStream.videoElement.play();
+		remoteStream.mediaStream = remoteMedia;
 	}
 
 	peerConnection.onicecandidate = (event: any) => {
@@ -141,6 +157,7 @@ export async function recieverAddPlayerAndRespond(
 			const candidate = event.candidate.toJSON();
 			const iceMessage: WebsocketMessage = {
 				User: userId,
+				Username: username,
 				ActionCode: 'ice',
 				Target: sendToId,
 				IceCandidates: {
@@ -160,7 +177,6 @@ export async function recieverAddPlayerAndRespond(
 			sdp: receivedOffer.Sdp,
 		}),
 	);
-	console.log('host established by answer');
 
 	const answerDescription = await peerConnection.createAnswer();
 
@@ -171,6 +187,7 @@ export async function recieverAddPlayerAndRespond(
 
 	const answerMessage: WebsocketMessage = {
 		User: userId,
+		Username: username,
 		ActionCode: 'pcAnswer',
 		Target: sendToId,
 		PCOffer: answer,
@@ -205,7 +222,6 @@ export async function addIceCandidate(
 	let numWait = 0;
 	while (peerConnection.remoteDescription === null && numWait < 20) {
 		await new Promise((r) => setTimeout(r, 100));
-		console.log('had to wait');
 		numWait += 1;
 	}
 	peerConnection.addIceCandidate(iceCandidate);

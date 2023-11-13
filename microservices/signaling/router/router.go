@@ -17,11 +17,10 @@ func StartRouter() {
 	router := gin.New()
 	router.Use(middleware.CORSMiddleware())
 	router.Use(gin.Logger())
-	v1 := router.Group("/v1")
+	v1 := router.Group("/signaling")
 	{
 		createRoom(v1)
+		createWebsocketRoute(v1)
 	}
-	redisWrapper.Test(redis)
-	router.GET("/ws", WebsocketRoute)
 	router.Run(":8080")
 }

@@ -7,6 +7,10 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+func createWebsocketRoute(group *gin.RouterGroup) {
+	group.GET("/ws", WebsocketRoute)
+}
+
 func WebsocketRoute(c *gin.Context) {
 	roomId := c.Query("roomId")
 	userId := c.Query("userId")
