@@ -1,19 +1,23 @@
 'use client';
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 const { v4: uuidv4 } = require('uuid');
 
 function StartRoom() {
+	const router = useRouter();
 	const [room, setRoom] = useState('');
 	return (
 		<div>
 			<div className="flex flex-row">
-				<Link
-					href={'/room/' + uuidv4()}
+				<button
+					onClick={() => {
+						router.push('/room/' + uuidv4());
+					}}
 					className="p-2 bg-blue-600 rounded-lg mr-2"
 				>
 					Create Room
-				</Link>
+				</button>
 				<input
 					className="rounded-lg w-[140px] text-black"
 					placeholder="Join Room"

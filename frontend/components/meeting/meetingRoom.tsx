@@ -14,11 +14,11 @@ function MeetingRoom({
 	return (
 		<div className="flex grow shrink basis-4/5">
 			<div
-				className={`grid gap-3 p-2 h-full w-full grid-cols-1  ${
+				className={`grid gap-3 p-2 h-full w-full ${
 					connectionUsers.length == 0
-						? 'grid-rows-1'
+						? 'grid-cols-1 grid-rows-1'
 						: connectionUsers.length == 1
-						? 'sm:grid-cols-2'
+						? 'grid-cols-1 grid-rows-2 sm:grid-rows-1 sm:grid-cols-2'
 						: connectionUsers.length <= 3
 						? 'grid-cols-2 grid-rows-2'
 						: 'grid-cols-2 grid-rows-4 sm:grid-cols-4 sm:grid-rows-2'

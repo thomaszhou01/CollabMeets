@@ -26,32 +26,50 @@ export async function startLocal(curMediaStream: HTMLVideoElement) {
 	localStream.getVideoTracks()[0].enabled =
 		!localStream.getVideoTracks()[0].enabled;
 
-	// if (testing) {
-	// 	localStream = await navigator.mediaDevices.getUserMedia({
-	// 		video: true,
-	// 		audio: true,
-	// 	});
-	// 	// localStream.getAudioTracks()[0].enabled =
-	// 	// 	!localStream.getAudioTracks()[0].enabled;
-
-	// 	// localStream.getVideoTracks()[0].enabled =
-	// 	// 	!localStream.getVideoTracks()[0].enabled;
-	// } else {
-	// 	localStream = await navigator.mediaDevices.getDisplayMedia({
-	// 		video: true,
-	// 		audio: true,
-	// 	});
-	// }
-
 	curMediaStream.srcObject = localStream;
 	curMediaStream.play();
 
-	// to stop stream
-	// localStream.getVideoTracks()[0].onended = function () {
-	// 	console.log('ended');
-	// };
-
 	return localStream;
+}
+
+export async function toggleScreenshare(
+	localStream: StreamMedia,
+	connections: Map<string, RTCPeerConnection>,
+	isUser: boolean,
+) {
+	let screen: MediaStream;
+	if (isUser) {
+		screen = await navigator.mediaDevices.getDisplayMedia({
+			video: true,
+			audio: true,
+		});
+	} else {
+		screen = await navigator.mediaDevices.getUserMedia({
+			video: true,
+			audio: true,
+		});
+	}
+
+	if (localStream.videoElement) {
+		localStream.videoElement.srcObject = screen;
+		localStream.videoElement.play();
+		const screenVideo = screen.getTracks().find((track) => {
+			return track.kind == 'video';
+		});
+		const screenAudio = screen.getTracks().find((track) => {
+			return track.kind == 'audio';
+		});
+
+		connections.forEach((connection: RTCPeerConnection, key) => {
+			connection.getSenders().forEach(async (sender) => {
+				if (sender.track && sender.track.kind === 'video' && screenVideo)
+					await sender.replaceTrack(screenVideo);
+				else if (sender.track && sender.track.kind === 'audio' && screenAudio)
+					await sender.replaceTrack(screenAudio);
+			});
+		});
+	}
+	return screen;
 }
 
 export async function hostAddPlayer(

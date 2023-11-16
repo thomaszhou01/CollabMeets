@@ -43,9 +43,8 @@ function StreamPlayer({
 					playsInline
 					muted={muted}
 				></video>
-				{/* <div className="absolute"> Status </div> */}
 			</div>
-			<div className="absolute left-4 bottom-2">
+			<div className="absolute left-4 bottom-2 overflow-hidden w-4/5">
 				{reference ? reference.current.username : streamId.username}
 			</div>
 		</div>

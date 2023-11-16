@@ -30,7 +30,7 @@ function MeetingControls({
 	return (
 		<div className="flex h-full items-center">
 			<div className="flex grow shrink basis-1/3 ml-4 justify-start max-w-full overflow-hidden overflow-ellipsis whitespace-nowrap">
-				<p>Room: {roomID} asdasdasd</p>
+				<p>Room: {roomID}</p>
 			</div>
 			<div className="flex grow shrink basis-1/3 justify-center">
 				<MediaButtons
@@ -40,6 +40,7 @@ function MeetingControls({
 					}}
 					iconEnabled={<Mic size={20} />}
 					iconDisabled={<MicMute size={20} />}
+					enabled={!streaming}
 				/>
 				<MediaButtons
 					toggle={video}
@@ -48,6 +49,7 @@ function MeetingControls({
 					}}
 					iconEnabled={<CameraVideo size={20} />}
 					iconDisabled={<CameraVideoOff size={20} />}
+					enabled={!streaming}
 				/>
 				<MediaButtons
 					toggle={streaming}
@@ -55,6 +57,7 @@ function MeetingControls({
 					iconEnabled={<Display size={20} />}
 					iconDisabled={<DisplayFill size={20} />}
 					text="Screenshare"
+					enabled={true}
 				/>
 			</div>
 			<div className="flex grow shrink basis-1/3 mr-4 justify-end max-w-full overflow-hidden overflow-ellipsis whitespace-nowrap">

@@ -42,3 +42,9 @@ export interface Connections {
 	user: string;
 	username: string;
 }
+
+export interface ChatMessage {
+	UserId: string;
+	Username: string;
+	Message: string;
+}

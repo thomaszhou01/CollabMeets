@@ -21,6 +21,7 @@ import {
 	recieverAddPlayerAndRespond,
 	addIceCandidate,
 	hostReceivePlayer,
+	toggleScreenshare,
 } from '@/components/webrtc/rtcMultiConnect';
 import { AuthContext } from '@/components/contexts/authContext';
 import StreamPlayer from '@/components/meeting/streamPlayer';
@@ -29,11 +30,16 @@ import MeetingControls from '@/components/meeting/meetingControls';
 import Chat from '@/components/meeting/chat';
 
 import MediaButtons from '@/components/meeting/mediaButtons';
+import {
+	signalingGetRoom,
+	signalingWebsocket,
+} from '@/components/api/signalingAPI';
+import { chatQueryRoom } from '@/components/api/chatAPI';
 const { v4: uuidv4 } = require('uuid');
 
 function Page({ params }: { params: { roomId: string } }) {
 	let username = useContext(AuthContext);
-	const websocket = useRef<WebSocket>();
+	const signalingSocket = useRef<WebSocket>();
 	const lastEdited = useRef<Array<LastEdited>>([]);
 	const localMedia = useRef<StreamMedia>({
 		user: 'local',
@@ -41,13 +47,13 @@ function Page({ params }: { params: { roomId: string } }) {
 		videoElement: null,
 		mediaStream: null,
 	});
-
 	const mediaStreams = useRef<Map<string, StreamMedia>>(new Map());
 	const connections = useRef<Map<string, RTCPeerConnection>>(new Map());
 	const [connectionUsers, setConnectionUsers] = useState<Array<Connections>>(
 		[],
 	);
 	const [inSetup, setInSetup] = useState(true);
+	const [available, setAvailable] = useState(false);
 	const [userId, setUserId] = useState('');
 	const [audio, setAudio] = useState(false);
 	const [video, setVideo] = useState(false);
@@ -64,7 +70,6 @@ function Page({ params }: { params: { roomId: string } }) {
 		}
 	}, [inSetup]);
 
-	//create iceCandidate/remove IceCandidate
 	useEffect(() => {
 		if (lastEdited.current.length > 0) {
 			const length = lastEdited.current.length;
@@ -84,7 +89,7 @@ function Page({ params }: { params: { roomId: string } }) {
 							localMedia.current,
 							streamMedia,
 							connection,
-							websocket.current!,
+							signalingSocket.current!,
 						);
 					}
 				} else if (editCommand.command == 'pcOffer') {
@@ -96,7 +101,7 @@ function Page({ params }: { params: { roomId: string } }) {
 							localMedia.current,
 							streamMedia,
 							connection,
-							websocket.current!,
+							signalingSocket.current!,
 							editCommand.misc,
 						);
 					} else {
@@ -111,37 +116,25 @@ function Page({ params }: { params: { roomId: string } }) {
 
 	useEffect(() => {
 		startLocalStream();
+		chatQueryRoom(params.roomId).then(async (response) => {
+			const data: boolean = await response.json();
+			console.log(data);
+			setAvailable(data);
+		});
 	}, []);
 
 	function setupConnections() {
-		const form = new FormData();
-		form.append('roomId', params.roomId);
-		const options = {
-			method: 'POST',
-			body: form,
-		};
-		fetch(
-			'https://' + process.env.NEXT_PUBLIC_GATEWAY + '/signaling/createRoom',
-			options,
-		).then((response) => {
-			if (!websocket.current) {
-				const user = uuidv4();
-				setUserId(user);
+		signalingGetRoom(params.roomId).then((response) => {
+			const user = uuidv4();
+			setUserId(user);
 
-				websocket.current = new WebSocket(
-					'wss://' +
-						process.env.NEXT_PUBLIC_GATEWAY +
-						'/signaling/ws?roomId=' +
-						params.roomId +
-						'&userId=' +
-						user,
-				);
-
-				websocket.current.addEventListener('error', (event: any) => {
+			if (!signalingSocket.current) {
+				signalingSocket.current = signalingWebsocket(params.roomId, user);
+				signalingSocket.current.addEventListener('error', (event: any) => {
 					console.log('WebSocket error: ', event);
 				});
 
-				websocket.current.onopen = function () {
+				signalingSocket.current.onopen = function () {
 					const newUser: WebsocketMessage = {
 						User: user,
 						Username: username,
@@ -149,11 +142,11 @@ function Page({ params }: { params: { roomId: string } }) {
 						Target: '',
 					};
 					if (response.status == 208) {
-						websocket.current!.send(JSON.stringify(newUser));
+						signalingSocket.current!.send(JSON.stringify(newUser));
 					}
 				};
 
-				websocket.current.onmessage = function (message: MessageEvent) {
+				signalingSocket.current.onmessage = function (message: MessageEvent) {
 					const parsedMessage: WebsocketMessage = JSON.parse(message.data);
 					const thisCon = connections.current.get(parsedMessage.User);
 
@@ -205,11 +198,11 @@ function Page({ params }: { params: { roomId: string } }) {
 				Target: '',
 			};
 			console.log('closing websocket', userId);
-			websocket.current!.send(JSON.stringify(leave));
-			websocket.current!.close();
+			signalingSocket.current!.send(JSON.stringify(leave));
+			signalingSocket.current!.close();
 		};
 		return () => {
-			if (websocket.current) {
+			if (signalingSocket.current) {
 				const leave: WebsocketMessage = {
 					User: userId,
 					Username: username,
@@ -217,8 +210,8 @@ function Page({ params }: { params: { roomId: string } }) {
 					Target: '',
 				};
 				console.log('closing websocket123');
-				websocket.current!.send(JSON.stringify(leave));
-				websocket.current!.close();
+				signalingSocket.current!.send(JSON.stringify(leave));
+				signalingSocket.current!.close();
 			}
 		};
 	}
@@ -228,7 +221,6 @@ function Page({ params }: { params: { roomId: string } }) {
 			setInSetup((prev) => !prev);
 			setupConnections();
 		} else {
-			console.log('no local media');
 		}
 	}
 
@@ -241,7 +233,7 @@ function Page({ params }: { params: { roomId: string } }) {
 	}
 
 	function toggleMute() {
-		if (localMedia.current.mediaStream) {
+		if (localMedia.current.mediaStream && !streaming) {
 			localMedia.current.mediaStream.getAudioTracks()[0].enabled =
 				!localMedia.current.mediaStream.getAudioTracks()[0].enabled;
 			setAudio(localMedia.current.mediaStream.getAudioTracks()[0].enabled);
@@ -249,29 +241,39 @@ function Page({ params }: { params: { roomId: string } }) {
 	}
 
 	function toggleVideo() {
-		if (localMedia.current.mediaStream) {
+		if (localMedia.current.mediaStream && !streaming) {
 			localMedia.current.mediaStream.getVideoTracks()[0].enabled =
 				!localMedia.current.mediaStream.getVideoTracks()[0].enabled;
 			setVideo(localMedia.current.mediaStream.getVideoTracks()[0].enabled);
 		}
 	}
 
-	function toggleStreaming() {
+	async function toggleStreaming() {
 		if (localMedia.current.mediaStream && !streaming) {
+			localMedia.current.mediaStream = await toggleScreenshare(
+				localMedia.current,
+				connections.current,
+				true,
+			);
 			setStreaming(true);
 		} else {
+			localMedia.current.mediaStream = await toggleScreenshare(
+				localMedia.current,
+				connections.current,
+				false,
+			);
+			if (localMedia.current.mediaStream) {
+				localMedia.current.mediaStream.getVideoTracks()[0].enabled = video;
+				localMedia.current.mediaStream.getAudioTracks()[0].enabled = audio;
+			}
 			setStreaming(false);
 		}
 	}
 
-	async function test() {
-		console.log(mediaStreams.current, localMedia.current);
-	}
-
 	if (inSetup)
 		return (
-			<div className="h-[100vh] bg-gray-800 flex flex-col items-center">
-				<div className="h-2/5 w-4/5">
+			<div className="h-[100vh] bg-gray-800 flex flex-col justify-center items-center">
+				<div className="h-3/5 w-3/5">
 					<StreamPlayer
 						manual={true}
 						streamId={{
@@ -282,6 +284,7 @@ function Page({ params }: { params: { roomId: string } }) {
 						muted={true}
 					/>
 				</div>
+
 				<div className="flex my-2">
 					<MediaButtons
 						toggle={audio}
@@ -290,6 +293,7 @@ function Page({ params }: { params: { roomId: string } }) {
 						}}
 						iconEnabled={<Mic size={20} />}
 						iconDisabled={<MicMute size={20} />}
+						enabled={!streaming}
 					/>
 					<MediaButtons
 						toggle={video}
@@ -298,6 +302,7 @@ function Page({ params }: { params: { roomId: string } }) {
 						}}
 						iconEnabled={<CameraVideo size={20} />}
 						iconDisabled={<CameraVideoOff size={20} />}
+						enabled={!streaming}
 					/>
 					<MediaButtons
 						toggle={streaming}
@@ -305,9 +310,17 @@ function Page({ params }: { params: { roomId: string } }) {
 						iconEnabled={<Display size={20} />}
 						iconDisabled={<DisplayFill size={20} />}
 						text="Screenshare"
+						enabled={true}
 					/>
 				</div>
-				<button onClick={setupComplete}>Enter Meet</button>
+				{available && (
+					<button
+						className="p-2 rounded-lg bg-opacity-10 hover:bg-slate-700"
+						onClick={setupComplete}
+					>
+						Enter Meet
+					</button>
+				)}
 			</div>
 		);
 
@@ -319,7 +332,7 @@ function Page({ params }: { params: { roomId: string } }) {
 					localMedia={localMedia}
 					mediaStreams={mediaStreams}
 				/>
-				{chat && <Chat />}
+				<Chat roomId={params.roomId} username={username} openChat={chat} />
 			</div>
 			<div className="h-[10%] bg-slate-900">
 				<MeetingControls

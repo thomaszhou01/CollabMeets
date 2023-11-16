@@ -27,37 +27,10 @@ func InitRedis() *redis.Client {
 	return client
 }
 
-func Test(client *redis.Client) {
-	ctx := context.Background()
-
-	go func() {
-		pubsub := client.Subscribe(ctx, "mychannel1")
-		defer pubsub.Close()
-
-		for {
-			ch := pubsub.Channel()
-
-			for msg := range ch {
-				fmt.Println(msg.Channel, msg.Payload)
-			}
-		}
-	}()
-
-	err := client.Publish(ctx, "mychannel1", "payload").Err()
-	if err != nil {
-		panic(err)
-	}
-}
-
-type Info struct {
-	Testgroup int    `json:"testgroup"  redis:"testgroup"`
-	Status    string `json:"status" redis:"status"`
-}
-
 func AddKeyHash(client *redis.Client, key string, value []string) bool {
 	ctx := context.Background()
 
-	cmd := client.HSet(ctx, key+":test:123", value)
+	cmd := client.HSet(ctx, key, value)
 	_, err := cmd.Result()
 	if err != nil {
 		log.Println(err)
@@ -82,7 +55,7 @@ func AddKeyValue(client *redis.Client, key string, value string) bool {
 func AddKeyList(client *redis.Client, key string, value string) bool {
 	ctx := context.Background()
 
-	cmd := client.LPush(ctx, "allList", "angry")
+	cmd := client.LPush(ctx, key, value)
 	_, err := cmd.Result()
 	if err != nil {
 		log.Println(err)

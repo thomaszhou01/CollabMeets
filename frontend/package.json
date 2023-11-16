@@ -10,6 +10,9 @@
   },
   "dependencies": {
     "@aws-amplify/ui-react": "^5.3.1",
+    "@emotion/react": "^11.11.1",
+    "@emotion/styled": "^11.11.0",
+    "@mui/material": "^5.14.17",
     "@react-oauth/google": "^0.11.1",
     "amazon-cognito-identity-js": "^6.3.6",
     "aws-amplify": "^5.3.11",
