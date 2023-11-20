@@ -1,4 +1,4 @@
-import { StreamMedia, Connections } from '../types/types';
+import { StreamMedia, Connection } from '../types/types';
 
 function StreamPlayer({
 	mediaStreams,
@@ -8,7 +8,7 @@ function StreamPlayer({
 	muted,
 }: {
 	mediaStreams?: React.MutableRefObject<Map<string, StreamMedia>>;
-	streamId: Connections;
+	streamId: Connection;
 	manual?: boolean;
 	reference?: React.MutableRefObject<StreamMedia>;
 	muted?: boolean;

@@ -4,37 +4,25 @@ import { Amplify, Auth, Hub } from 'aws-amplify';
 import { AuthProvider } from '../contexts/authContext';
 import awsConfig from '../../app/aws-exports';
 import { chatIsUser, chatRegisterUser } from '../api/chatAPI';
+import { Connection } from '../types/types';
 
 function AuthListener({ children }: { children: React.ReactNode }) {
-	const [user, setUser] = useState('');
+	const [user, setUser] = useState<Connection>({ user: '', username: '' });
 
 	useEffect(() => {
 		awsConfig.oauth.redirectSignIn = `${window.location.origin}/`;
 		awsConfig.oauth.redirectSignOut = `${window.location.origin}/`;
 		Amplify.configure(awsConfig);
 
-		const unsubscribe = Hub.listen(
-			'auth',
-			async ({ payload: { event, data } }) => {
-				switch (event) {
-					case 'signIn':
-						const currentUser = await Auth.currentAuthenticatedUser();
-						setUser(currentUser.attributes.email);
-						chatIsUser(currentUser.username).then((response) => {
-							if (response.status != 208) {
-								chatRegisterUser(
-									currentUser.username,
-									currentUser.attributes.email,
-								);
-							}
-						});
-						break;
-					case 'signOut':
-						setUser('');
-						break;
-				}
-			},
-		);
+		const unsubscribe = Hub.listen('auth', ({ payload: { event, data } }) => {
+			switch (event) {
+				case 'signIn':
+					break;
+				case 'signOut':
+					setUser({ user: '', username: '' });
+					break;
+			}
+		});
 
 		getUser();
 
@@ -44,7 +32,15 @@ function AuthListener({ children }: { children: React.ReactNode }) {
 	const getUser = async (): Promise<void> => {
 		try {
 			const currentUser = await Auth.currentAuthenticatedUser();
-			setUser(currentUser.attributes.email);
+			chatIsUser(currentUser.username).then((response) => {
+				if (response.status != 208) {
+					chatRegisterUser(currentUser.username, currentUser.attributes.email);
+				}
+			});
+			setUser({
+				user: currentUser.username,
+				username: currentUser.attributes.email,
+			});
 		} catch (error) {}
 	};
 	return <AuthProvider value={user}>{children}</AuthProvider>;

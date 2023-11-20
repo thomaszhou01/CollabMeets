@@ -25,7 +25,6 @@ func createRoom(group *gin.RouterGroup) {
 		go hub.Run()
 		hubs[roomId] = hub
 
-		redis.Publish(c, "createRoom", roomId)
 		log.Println(roomId, "at hub ", hub, " total there are ", len(hubs), " hubs")
 		c.String(200, roomId)
 	})

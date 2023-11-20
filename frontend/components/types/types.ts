@@ -38,7 +38,7 @@ export interface LastEdited {
 	misc?: any;
 }
 
-export interface Connections {
+export interface Connection {
 	user: string;
 	username: string;
 }
@@ -46,5 +46,15 @@ export interface Connections {
 export interface ChatMessage {
 	UserId: string;
 	Username: string;
+	Message: string;
+}
+
+export interface ChatHistory {
+	RoomId: string;
+	Messages: ChatHistoryMessage[];
+}
+
+export interface ChatHistoryMessage {
+	From: string;
 	Message: string;
 }

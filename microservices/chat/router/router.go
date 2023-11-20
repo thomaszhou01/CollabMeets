@@ -22,8 +22,8 @@ func StartRouter(ctx context.Context) {
 	v1 := router.Group("/chat")
 	{
 		websocketRoute(v1)
-		startChat(v1)
+		chatRoutes(v1)
 	}
-	go chat.CreateRoom(ctx, postgresDB, redis)
+	go chat.CloseRoom(ctx, postgresDB, redis)
 	router.Run(":8080")
 }

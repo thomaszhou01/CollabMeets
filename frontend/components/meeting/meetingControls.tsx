@@ -5,6 +5,7 @@ import {
 	DisplayFill,
 	Mic,
 	MicMute,
+	TelephoneOutboundFill,
 } from 'react-bootstrap-icons';
 import MediaButtons from './mediaButtons';
 
@@ -16,6 +17,7 @@ function MeetingControls({
 	toggleVideo,
 	toggleStreaming,
 	toggleChat,
+	leaveRoom,
 	roomID,
 }: {
 	audio: boolean;
@@ -25,6 +27,7 @@ function MeetingControls({
 	toggleVideo: any;
 	toggleStreaming: any;
 	toggleChat: any;
+	leaveRoom: any;
 	roomID: string;
 }) {
 	return (
@@ -56,7 +59,15 @@ function MeetingControls({
 					setToggle={() => toggleStreaming()}
 					iconEnabled={<Display size={20} />}
 					iconDisabled={<DisplayFill size={20} />}
-					text="Screenshare"
+					text=""
+					enabled={true}
+				/>
+				<MediaButtons
+					toggle={false}
+					setToggle={() => leaveRoom()}
+					iconEnabled={<TelephoneOutboundFill size={20} />}
+					iconDisabled={<TelephoneOutboundFill size={20} />}
+					text=""
 					enabled={true}
 				/>
 			</div>

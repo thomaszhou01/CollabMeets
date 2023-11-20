@@ -1,6 +1,7 @@
 package messaging
 
 import (
+	"context"
 	"log"
 	"screenshare/signaling/interfaces"
 
@@ -82,6 +83,9 @@ func (h *Hub) Run() {
 			}
 		default:
 			if h.entered && len(h.Clients) == 0 {
+				c := context.Background()
+				h.redis.Publish(c, "closeRoom", h.hubID)
+
 				delete(*h.hub, h.hubID)
 				log.Println("Hub ", &h, " closing. There are ", len(*h.hub), " hubs left")
 				goto end

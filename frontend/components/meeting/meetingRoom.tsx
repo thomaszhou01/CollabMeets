@@ -1,13 +1,13 @@
 import { MutableRefObject } from 'react';
 import StreamPlayer from './streamPlayer';
-import { StreamMedia, Connections } from '../types/types';
+import { StreamMedia, Connection } from '../types/types';
 
 function MeetingRoom({
 	connectionUsers,
 	localMedia,
 	mediaStreams,
 }: {
-	connectionUsers: Connections[];
+	connectionUsers: Connection[];
 	localMedia: MutableRefObject<StreamMedia>;
 	mediaStreams: MutableRefObject<Map<string, StreamMedia>>;
 }) {

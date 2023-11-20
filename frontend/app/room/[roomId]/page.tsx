@@ -8,11 +8,12 @@ import {
 	Mic,
 	MicMute,
 } from 'react-bootstrap-icons';
+import { useRouter } from 'next/navigation';
 import {
 	WebsocketMessage,
 	LastEdited,
 	StreamMedia,
-	Connections,
+	Connection,
 } from '@/components/types/types';
 import {
 	iceServers,
@@ -38,6 +39,7 @@ import { chatQueryRoom } from '@/components/api/chatAPI';
 const { v4: uuidv4 } = require('uuid');
 
 function Page({ params }: { params: { roomId: string } }) {
+	const router = useRouter();
 	let username = useContext(AuthContext);
 	const signalingSocket = useRef<WebSocket>();
 	const lastEdited = useRef<Array<LastEdited>>([]);
@@ -49,9 +51,7 @@ function Page({ params }: { params: { roomId: string } }) {
 	});
 	const mediaStreams = useRef<Map<string, StreamMedia>>(new Map());
 	const connections = useRef<Map<string, RTCPeerConnection>>(new Map());
-	const [connectionUsers, setConnectionUsers] = useState<Array<Connections>>(
-		[],
-	);
+	const [connectionUsers, setConnectionUsers] = useState<Array<Connection>>([]);
 	const [inSetup, setInSetup] = useState(true);
 	const [available, setAvailable] = useState(false);
 	const [userId, setUserId] = useState('');
@@ -84,7 +84,7 @@ function Page({ params }: { params: { roomId: string } }) {
 					if (streamMedia && connection) {
 						hostAddPlayer(
 							userId,
-							username,
+							username.username,
 							editCommand.user,
 							localMedia.current,
 							streamMedia,
@@ -96,7 +96,7 @@ function Page({ params }: { params: { roomId: string } }) {
 					if (streamMedia && connection) {
 						recieverAddPlayerAndRespond(
 							userId,
-							username,
+							username.username,
 							editCommand.user,
 							localMedia.current,
 							streamMedia,
@@ -118,9 +118,27 @@ function Page({ params }: { params: { roomId: string } }) {
 		startLocalStream();
 		chatQueryRoom(params.roomId).then(async (response) => {
 			const data: boolean = await response.json();
-			console.log(data);
 			setAvailable(data);
 		});
+
+		return () => {
+			if (signalingSocket.current) {
+				const leave: WebsocketMessage = {
+					User: userId,
+					Username: username.username,
+					ActionCode: 'leave',
+					Target: '',
+				};
+				console.log('closing websocket123');
+				signalingSocket.current!.send(JSON.stringify(leave));
+				signalingSocket.current!.close();
+			}
+			if (localMedia.current.mediaStream) {
+				localMedia.current.mediaStream.getTracks().forEach(function (track) {
+					track.stop();
+				});
+			}
+		};
 	}, []);
 
 	function setupConnections() {
@@ -137,7 +155,7 @@ function Page({ params }: { params: { roomId: string } }) {
 				signalingSocket.current.onopen = function () {
 					const newUser: WebsocketMessage = {
 						User: user,
-						Username: username,
+						Username: username.username,
 						ActionCode: 'new',
 						Target: '',
 					};
@@ -193,26 +211,13 @@ function Page({ params }: { params: { roomId: string } }) {
 		window.onbeforeunload = function () {
 			const leave: WebsocketMessage = {
 				User: userId,
-				Username: username,
+				Username: username.username,
 				ActionCode: 'leave',
 				Target: '',
 			};
-			console.log('closing websocket', userId);
+			console.log('closing websocket WINDOW', userId);
 			signalingSocket.current!.send(JSON.stringify(leave));
 			signalingSocket.current!.close();
-		};
-		return () => {
-			if (signalingSocket.current) {
-				const leave: WebsocketMessage = {
-					User: userId,
-					Username: username,
-					ActionCode: 'leave',
-					Target: '',
-				};
-				console.log('closing websocket123');
-				signalingSocket.current!.send(JSON.stringify(leave));
-				signalingSocket.current!.close();
-			}
 		};
 	}
 
@@ -270,6 +275,10 @@ function Page({ params }: { params: { roomId: string } }) {
 		}
 	}
 
+	function leaveRoom() {
+		router.push('/');
+	}
+
 	if (inSetup)
 		return (
 			<div className="h-[100vh] bg-gray-800 flex flex-col justify-center items-center">
@@ -315,10 +324,10 @@ function Page({ params }: { params: { roomId: string } }) {
 				</div>
 				{available && (
 					<button
-						className="p-2 rounded-lg bg-opacity-10 hover:bg-slate-700"
+						className="p-2 rounded-lg bg-slate-900 hover:bg-slate-700 "
 						onClick={setupComplete}
 					>
-						Enter Meet
+						Enter Room
 					</button>
 				)}
 			</div>
@@ -342,6 +351,7 @@ function Page({ params }: { params: { roomId: string } }) {
 					toggleMute={toggleMute}
 					toggleVideo={toggleVideo}
 					toggleStreaming={toggleStreaming}
+					leaveRoom={leaveRoom}
 					toggleChat={() => setChat((prev) => !prev)}
 					roomID={params.roomId}
 				/>

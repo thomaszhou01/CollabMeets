@@ -36,6 +36,19 @@ export async function chatQueryRoom(roomId: string) {
 	);
 }
 
+export async function chatCreateRoom(roomId: string) {
+	const options = {
+		method: 'POST',
+	};
+	return await fetch(
+		'https://' +
+			process.env.NEXT_PUBLIC_GATEWAY +
+			'/chat/createChatRoom?roomId=' +
+			roomId,
+		options,
+	);
+}
+
 export async function chatEnterChatRoom(user: string, roomId: string) {
 	const options = {
 		method: 'POST',
@@ -47,6 +60,19 @@ export async function chatEnterChatRoom(user: string, roomId: string) {
 			user +
 			'&roomId=' +
 			roomId,
+		options,
+	);
+}
+
+export async function chatGetUserMessages(user: string) {
+	const options = {
+		method: 'get',
+	};
+	return await fetch(
+		'https://' +
+			process.env.NEXT_PUBLIC_GATEWAY +
+			'/chat/getUserMessages?user=' +
+			user,
 		options,
 	);
 }

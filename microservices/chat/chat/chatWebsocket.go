@@ -42,7 +42,7 @@ func ReadMessage(c *Client) {
 		var result ChatMessage
 		json.Unmarshal([]byte(message), &result)
 
-		_, errDB := c.postgres.Exec("INSERT INTO messages (chat_id, user_id, content) VALUES ($1, $2, $3)", c.roomId, result.UserId, result.Message)
+		_, errDB := c.postgres.Exec("INSERT INTO messages (chat_id, user_id, content) VALUES ($1, $2, $3)", c.roomId, result.Username, result.Message)
 		if errDB != nil {
 			log.Println(errDB)
 		}
