@@ -12,7 +12,7 @@ function ChatHistoryDisplay({
 			<div className="fixed sm:hidden top-0 left-0 w-full bg-slate-900">
 				<button onClick={() => toggleChat(true)}>View Chats</button>
 			</div>
-			{messages &&
+			{messages && messages.Messages.length > 0 ? (
 				messages.Messages.map((message, index) => {
 					return (
 						<div key={messages.RoomId + index} className="mb-2">
@@ -20,7 +20,10 @@ function ChatHistoryDisplay({
 							<p>{message.Message}</p>
 						</div>
 					);
-				})}
+				})
+			) : (
+				<p>No messages</p>
+			)}
 		</div>
 	);
 }

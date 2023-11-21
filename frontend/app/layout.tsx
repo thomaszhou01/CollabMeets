@@ -8,8 +8,8 @@ import { Providers } from './providers';
 const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
-	title: 'Screenshare',
-	description: 'Easily share your screen with others',
+	title: 'CollabMeets',
+	description: 'Create video meeting spaces with one click',
 };
 
 export default function RootLayout({

@@ -81,7 +81,7 @@ function StartRoom() {
 				/>
 				<Link
 					href={'/room/' + room}
-					className="p-2 rounded-lg bg-opacity-10 hover:bg-slate-700"
+					className="p-2 rounded-lg bg-opacity-10 hover:bg-slate-700 flex items-center"
 				>
 					Join
 				</Link>
