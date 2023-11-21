@@ -25,7 +25,10 @@ export default function Page() {
 	function toggleChat(index: number) {
 		setOpenChat(true);
 		setChatId(index);
-		console.log(openChat);
+	}
+
+	function viewChats() {
+		setOpenChat(false);
 	}
 
 	return (
@@ -38,8 +41,7 @@ export default function Page() {
 				/>
 				<ChatHistoryDisplay
 					messages={messages[chatId]}
-					openChat={openChat}
-					toggleChat={toggleChat}
+					toggleChat={viewChats}
 				/>
 			</div>
 		</Providers>
