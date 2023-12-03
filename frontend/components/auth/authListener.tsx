@@ -3,7 +3,7 @@ import React, { useEffect, useState, createContext } from 'react';
 import { Amplify, Auth, Hub } from 'aws-amplify';
 import { AuthProvider } from '../contexts/authContext';
 import awsConfig from '../../app/aws-exports';
-import { chatIsUser, chatRegisterUser } from '../api/chatAPI';
+import { userIsUser, userRegisterUser } from '../api/userAPI';
 import { Connection } from '../types/types';
 
 function AuthListener({ children }: { children: React.ReactNode }) {
@@ -32,9 +32,9 @@ function AuthListener({ children }: { children: React.ReactNode }) {
 	const getUser = async (): Promise<void> => {
 		try {
 			const currentUser = await Auth.currentAuthenticatedUser();
-			chatIsUser(currentUser.username).then((response) => {
+			userIsUser(currentUser.username).then((response) => {
 				if (response.status != 208) {
-					chatRegisterUser(currentUser.username, currentUser.attributes.email);
+					userRegisterUser(currentUser.username, currentUser.attributes.email);
 				}
 			});
 			setUser({
